@@ -38,22 +38,22 @@ func runVM(ctx context.Context, opts *options) error {
 		return fmt.Errorf("failed to start binary, %q: %v", firecrackerBinary, err)
 	}
 
-	m, err := firecracker.NewMachine(vmmCtx, fcCfg, machineOpts...)
+	machine, err := firecracker.NewMachine(vmmCtx, fcCfg, machineOpts...)
 	if err != nil {
 		return fmt.Errorf("failed creating machine: %s", err)
 	}
 
-	if err := m.Start(vmmCtx); err != nil {
+	if err := machine.Start(vmmCtx); err != nil {
 		return fmt.Errorf("failed to start machine: %v", err)
 	}
 
 	// Stop VM when this function exits
-	defer m.StopVMM()
+	defer machine.StopVMM()
 
-	signalHandlers(vmmCtx, m)
+	signalHandlers(vmmCtx, machine)
 
 	// wait for the VM to exit
-	if err := m.Wait(vmmCtx); err != nil {
+	if err := machine.Wait(vmmCtx); err != nil {
 		return fmt.Errorf("wait returned an error %s", err)
 	}
 
@@ -66,10 +66,10 @@ func signalHandlers(ctx context.Context, m *firecracker.Machine) {
 	go func() {
 		// Reset signal handlers
 		signal.Reset(os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+		channel := make(chan os.Signal, 1)
+		signal.Notify(channel, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 
-		var signal os.Signal = <-c
+		var signal os.Signal = <-channel
 		if signal == syscall.SIGTERM || signal == os.Interrupt {
 			log.Printf("Caught signal: %s, clean shutdown", signal.String())
 			m.Shutdown(ctx)
