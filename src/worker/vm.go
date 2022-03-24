@@ -13,9 +13,9 @@ import (
 )
 
 // Run a firecracker VM
-func runVM(ctx context.Context, opts *options) error {
+func runVM(ctx context.Context, opts *options, args arguments) error {
 	// options -> firecracker config
-	fcCfg, err := opts.createFirecrackerConfig()
+	fcCfg, err := opts.createFirecrackerConfig(args)
 	if err != nil {
 		log.Errorf("Error: %s", err)
 		return err

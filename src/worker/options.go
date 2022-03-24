@@ -21,7 +21,7 @@ type options struct {
 }
 
 // Converts options to a usable firecracker config
-func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
+func (opts *options) createFirecrackerConfig(args arguments) (firecracker.Config, error) {
 	// setup NICs
 	var NICs []firecracker.NetworkInterface
 
@@ -44,7 +44,6 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 		strconv.Itoa(rand.Intn(1000))},
 		"-",
 	)
-
 	return firecracker.Config{
 		SocketPath:        socketPath,
 		LogLevel:          "Debug",
@@ -55,9 +54,9 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 		NetworkInterfaces: NICs,
 		VsockDevices:      vsocks,
 		MachineCfg: models.MachineConfiguration{
-			VcpuCount:  firecracker.Int64(1),
+			VcpuCount:  firecracker.Int64(args.VcpuCount),
 			Smt:        firecracker.Bool(true),
-			MemSizeMib: firecracker.Int64(512),
+			MemSizeMib: firecracker.Int64(args.MemSizeMib),
 		},
 	}, nil
 }
