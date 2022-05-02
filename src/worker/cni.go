@@ -11,5 +11,5 @@ func cni(machine *firecracker.Machine, opts *options) {
 			BinPath:     opts.CNIPluginsPath,
 		},
 	}}
-	machine.Cfg.NetNS = "ext/netns"
+	machine.Cfg.NetNS = opts.CNINetnsPath
 }

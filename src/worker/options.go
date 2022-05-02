@@ -22,6 +22,7 @@ type options struct {
 	MemSizeMib      int64    `json:"MemSizeMib,omitempty"`
 	CNIConfigPath   string   `discription:"CNI network configuration path"`
 	CNIPluginsPath  []string `discription:"CNI plugins path"`
+	CNINetnsPath    string   `discription:"CNI Netns path"`
 }
 
 // Converts options to a usable firecracker config
