@@ -1,16 +1,14 @@
 package main
 
-import (
-	"github.com/firecracker-microvm/firecracker-go-sdk"
-)
+import "github.com/firecracker-microvm/firecracker-go-sdk"
 
-func cni(machine *firecracker.Machine) {
+func cni(machine *firecracker.Machine, opts *options) {
 	machine.Cfg.NetworkInterfaces = []firecracker.NetworkInterface{{
 		CNIConfiguration: &firecracker.CNIConfiguration{
 			NetworkName: "fcnet",
 			IfName:      "veth0",
-			ConfDir:     "cni/conf.d",
-			BinPath:     []string{"../../plugins/bin"},
+			ConfDir:     opts.CNIConfigPath,
+			BinPath:     opts.CNIPluginsPath,
 		},
 	}}
 	machine.Cfg.NetNS = "ext/netns"

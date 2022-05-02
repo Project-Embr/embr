@@ -16,10 +16,12 @@ func newOptions() *options {
 }
 
 type options struct {
-	FcKernelImage   string `description:"Kernel image path"`
-	FcRootDrivePath string `description:"RootFS path"`
-	VCpuCount       int64  `json:"VCpuCount,omitempty"`
-	MemSizeMib      int64  `json:"MemSizeMib,omitempty"`
+	FcKernelImage   string   `description:"Kernel image path"`
+	FcRootDrivePath string   `description:"RootFS path"`
+	VCpuCount       int64    `json:"VCpuCount,omitempty"`
+	MemSizeMib      int64    `json:"MemSizeMib,omitempty"`
+	CNIConfigPath   string   `discription:"CNI network configuration path"`
+	CNIPluginsPath  []string `discription:"CNI plugins path"`
 }
 
 // Converts options to a usable firecracker config
