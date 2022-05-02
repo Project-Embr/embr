@@ -20,6 +20,7 @@ type options struct {
 	FcRootDrivePath string   `description:"RootFS path"`
 	CNIConfigPath   string   `discription:"CNI network configuration path"`
 	CNIPluginsPath  []string `discription:"CNI plugins path"`
+	CNINetnsPath    string   `discription:"CNI Netns path"`
 }
 
 // Converts options to a usable firecracker config
