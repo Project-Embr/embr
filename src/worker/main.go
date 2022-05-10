@@ -9,7 +9,7 @@ func main() {
 	etcdClient := getClient()
 	defer etcdClient.Close()
 
-	watchKey(etcdClient, "config")
+	startWatchers(etcdClient)
 
 	log.Fatal(<-etcdServer.Err()) //Blocking statement
 }

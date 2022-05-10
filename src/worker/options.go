@@ -18,6 +18,8 @@ func newOptions() *options {
 type options struct {
 	FcKernelImage   string `description:"Kernel image path"`
 	FcRootDrivePath string `description:"RootFS path"`
+	VCpuCount       int64  `json:"VCpuCount,omitempty"`
+	MemSizeMib      int64  `json:"MemSizeMib,omitempty"`
 }
 
 // Converts options to a usable firecracker config
@@ -55,9 +57,9 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 		NetworkInterfaces: NICs,
 		VsockDevices:      vsocks,
 		MachineCfg: models.MachineConfiguration{
-			VcpuCount:  firecracker.Int64(1),
+			VcpuCount:  firecracker.Int64(opts.VCpuCount),
 			Smt:        firecracker.Bool(true),
-			MemSizeMib: firecracker.Int64(512),
+			MemSizeMib: firecracker.Int64(opts.MemSizeMib),
 		},
 	}, nil
 }

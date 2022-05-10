@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -41,24 +42,36 @@ func getClient() *client.Client {
 	return etcdClient
 }
 
-func watchKey(etcdClient *client.Client, key string) {
+func watchEmbrs(etcdClient *client.Client) {
 	go func() {
-		watcher := etcdClient.Watch(context.Background(), key)
+		watcher := etcdClient.Watch(context.Background(), etcdEmbrPrefix, client.WithPrefix())
 		for resp := range watcher {
 			for _, ev := range resp.Events {
 				log.Info(fmt.Sprintf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value))
-				startVM()
+				startVM(etcdClient, ev.Kv.Value)
 			}
 		}
 	}()
 }
 
-func startVM() {
+func startWatchers(etcdClient *client.Client) {
+	watchEmbrs(etcdClient)
+}
+
+func startVM(etcdClient *client.Client, inputOps []byte) {
 	opts := newOptions()
 
 	// These files must exist
 	opts.FcKernelImage = "ext/alpine.bin"
 	opts.FcRootDrivePath = "ext/rootfs.ext4"
+
+	err := json.Unmarshal(inputOps, &opts)
+	if err != nil {
+		fmt.Println("Unable to convert the JSON string to a struct")
+	} else {
+		// print the post
+		log.Info(opts)
+	}
 
 	if err := runVM(context.Background(), opts); err != nil {
 		log.Fatalf(err.Error())
