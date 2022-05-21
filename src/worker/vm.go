@@ -12,6 +12,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+
+func createNewVM(opts *options) chan string{
+	command := make(chan string, 1)
+	err := make(chan error, 1)
+	go runVM(context.Background(), opts, err, command)
+
+	return command
+}
+
 // Run a firecracker VM
 func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan string) error {
 	// options -> firecracker config
@@ -32,32 +41,32 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan strin
 	var firecrackerBinary string
 	firecrackerBinary, err = exec.LookPath("firecracker")
 	if os.IsNotExist(err) {
+		er <- err
 		return fmt.Errorf("binary %q does not exist: %v", firecrackerBinary, err)
 	}
 	if err != nil {
+		er <- err
 		return fmt.Errorf("failed to start binary, %q: %v", firecrackerBinary, err)
 	}
 
 	machine, err := firecracker.NewMachine(vmmCtx, fcCfg, machineOpts...)
 	if err != nil {
+		er <- err
 		return fmt.Errorf("failed creating machine: %s", err)
 	}
 
 	if err := machine.Start(vmmCtx); err != nil {
+		er <- err
 		return fmt.Errorf("failed to start machine: %v", err)
 	}
+
+	er <- nil
 
 	// Wait for a signal and triger stopVMM
 	if(<- cmd == "shutdown"){
 		machine.StopVMM()
 	}
-	signalHandlers(vmmCtx, machine)
 
-	// wait for the VM to exit
-	if err := machine.Wait(vmmCtx); err != nil {
-		return fmt.Errorf("wait returned an error %s", err)
-	}
-	er <- nil
 	return nil
 }
 

@@ -1,11 +1,16 @@
 package main
 
 import (
-	"context"
 	"time"
-
+	"fmt"
 	//log "github.com/sirupsen/logrus"
 )
+
+//Basic list node to store channels
+type Node struct{
+	next *Node
+	channel chan string
+}
 
 func main() {
 	opts := newOptions()
@@ -14,11 +19,14 @@ func main() {
 	opts.FcKernelImage = "ext/alpine.bin"
 	opts.FcRootDrivePath = "ext/rootfs.ext4"
 
-	command := make(chan string, 1)
-	err := make(chan error, 1)
-	go runVM(context.Background(), opts, err, command)
+	head := &Node{
+		next: nil,
+		channel: nil,
+	}
+	head.channel = createNewVM(opts)
+	if(head.channel == nil){
+		fmt.Errorf("Error creating machine")
+	}
 	time.Sleep(5 * time.Second)
-	command <- "shutdown"
-	//create an error channel and halt the program until VM is started
-	//possibly impliment an occaasional statuscheck routine aswell
+	head.channel <- "shutdown"
 }
