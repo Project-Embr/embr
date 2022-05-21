@@ -13,7 +13,7 @@ import (
 )
 
 // Run a firecracker VM
-func runVM(ctx context.Context, opts *options) error {
+func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan string) error {
 	// options -> firecracker config
 	fcCfg, err := opts.createFirecrackerConfig()
 	if err != nil {
@@ -47,17 +47,17 @@ func runVM(ctx context.Context, opts *options) error {
 		return fmt.Errorf("failed to start machine: %v", err)
 	}
 
-	// Stop VM when this function exits
-	defer machine.StopVMM()
-
+	// Wait for a signal and triger stopVMM
+	if(<- cmd == "shutdown"){
+		machine.StopVMM()
+	}
 	signalHandlers(vmmCtx, machine)
 
 	// wait for the VM to exit
 	if err := machine.Wait(vmmCtx); err != nil {
 		return fmt.Errorf("wait returned an error %s", err)
 	}
-
-	log.Printf("Machine started successfully")
+	er <- nil
 	return nil
 }
 
