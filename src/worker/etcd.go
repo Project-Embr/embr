@@ -68,9 +68,6 @@ func startVM(etcdClient *client.Client, inputOps []byte) {
 	err := json.Unmarshal(inputOps, &opts)
 	if err != nil {
 		fmt.Println("Unable to convert the JSON string to a struct")
-	} else {
-		// print the post
-		log.Info(opts)
 	}
 
 	if err := runVM(context.Background(), opts); err != nil {
