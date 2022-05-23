@@ -1,0 +1,18 @@
+# Add 'CI/CD' label to any change within .github/workflows
+CI/CD:
+- .github/workflows/*
+- .github/workflows/**/*
+
+# Add 'worker' label to any change within src/infra
+worker:
+- src/worker/*
+- src/worker/**/*
+
+# Add 'master' label to any change within src/infra
+master:
+- src/master/*
+- src/master/**/*
+
+# Add 'documentation' label to any changes to a markdown file
+documentation:
+- '**/*.md'
