@@ -12,12 +12,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
+//Creates a new firecracker VM and returns the command channel
 func createNewVM(opts *options) chan string{
 	command := make(chan string, 1)
 	err := make(chan error, 1)
 	go runVM(context.Background(), opts, err, command)
 
+	if (<- err == nil){
+		fmt.Println("machine started successfully")
+	} else{
+		fmt.Println("Failed to create machine")
+	}
 	return command
 }
 
@@ -30,6 +35,8 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan strin
 		return err
 	}
 	logger := log.New()
+	//client := firecracker.NewClient("unix", log.NewEntry(logger), true)
+	
 
 	vmmCtx, vmmCancel := context.WithCancel(ctx)
 	defer vmmCancel()
@@ -61,12 +68,10 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan strin
 	}
 
 	er <- nil
-
-	// Wait for a signal and triger stopVMM
+		// Wait for a signal and triger stopVMM
 	if(<- cmd == "shutdown"){
-		machine.StopVMM()
+		machine.Shutdown(ctx)
 	}
-
 	return nil
 }
 

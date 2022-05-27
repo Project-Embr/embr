@@ -23,10 +23,14 @@ func main() {
 		next: nil,
 		channel: nil,
 	}
+	
 	head.channel = createNewVM(opts)
 	if(head.channel == nil){
 		fmt.Errorf("Error creating machine")
 	}
+	var cmd string
+	fmt.Scanln(&cmd)
+	fmt.Println("%s", cmd)
 	time.Sleep(5 * time.Second)
 	head.channel <- "shutdown"
 }
