@@ -13,7 +13,7 @@ func main() {
 	opts.FcKernelImage = "ext/alpine.bin"
 	opts.FcRootDrivePath = "ext/rootfs.ext4"
 	opts.CNIConfigPath = "cni/conf.d/"
-	opts.CNIPluginsPath = []string{"cni/plugins/"}
+	opts.CNIPluginsPath = []string{"../../submodules/plugins/bin/"}
 	opts.CNINetnsPath = "ext/netns"
 
 	if err := runVM(context.Background(), opts); err != nil {
