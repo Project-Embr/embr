@@ -38,6 +38,5 @@ jobs:
 
     - name: Go build
       run: |
-        go mod init
-        go mod download
+        go mod verify
         go build
