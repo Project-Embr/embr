@@ -37,4 +37,7 @@ jobs:
     - run: cd src/worker
 
     - name: Go build
-      run: go build
+      run: -|
+        go mod init
+        go mod download
+        go build
