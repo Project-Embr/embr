@@ -3,3 +3,6 @@ ext
 
 # Compiled output
 worker
+
+# Etcd
+default.etcd

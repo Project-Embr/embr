@@ -58,9 +58,9 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 		NetworkInterfaces: NICs,
 		VsockDevices:      vsocks,
 		MachineCfg: models.MachineConfiguration{
-			VcpuCount:  firecracker.Int64(1),
+			VcpuCount:  firecracker.Int64(opts.VCpuCount),
 			Smt:        firecracker.Bool(true),
-			MemSizeMib: firecracker.Int64(512),
+			MemSizeMib: firecracker.Int64(opts.MemSizeMib),
 		},
 	}, nil
 }

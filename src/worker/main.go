@@ -1,22 +1,15 @@
 package main
 
-import (
-	"context"
-
-	log "github.com/sirupsen/logrus"
-)
+import log "github.com/sirupsen/logrus"
 
 func main() {
-	opts := newOptions()
+	etcdServer := startEtcd()
+	defer etcdServer.Close()
 
-	// These files must exist
-	opts.FcKernelImage = "ext/alpine.bin"
-	opts.FcRootDrivePath = "ext/rootfs.ext4"
-	opts.CNIConfigPath = "cni/conf.d/"
-	opts.CNIPluginsPath = []string{"../../submodules/plugins/bin/"}
-	opts.CNINetnsPath = "ext/netns"
+	etcdClient := getClient()
+	defer etcdClient.Close()
 
-	if err := runVM(context.Background(), opts); err != nil {
-		log.Fatalf(err.Error())
-	}
+	startWatchers(etcdClient)
+
+	log.Fatal(<-etcdServer.Err()) //Blocking statement
 }
