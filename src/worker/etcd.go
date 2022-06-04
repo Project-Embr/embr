@@ -64,6 +64,9 @@ func startVM(etcdClient *client.Client, inputOps []byte) {
 	// These files must exist
 	opts.FcKernelImage = "ext/alpine.bin"
 	opts.FcRootDrivePath = "ext/rootfs.ext4"
+	opts.CNIConfigPath = "cni/conf.d/"
+	opts.CNIPluginsPath = []string{"../../submodules/plugins/bin/"}
+	opts.CNINetnsPath = "ext/netns"
 
 	err := json.Unmarshal(inputOps, &opts)
 	if err != nil {
