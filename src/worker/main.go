@@ -1,10 +1,10 @@
 package main
 
+
 import (
 	"time"
 	"fmt"
 	"strconv"
-	//log "github.com/sirupsen/logrus"
 )
 
 //Basic list node to store channels
@@ -15,12 +15,14 @@ type Node struct{
 }
 
 func main() {
-	opts := newOptions()
+	etcdServer := startEtcd()
+	defer etcdServer.Close()
 
-	// These files must exist
-	opts.FcKernelImage = "ext/alpine.bin"
-	opts.FcRootDrivePath = "ext/rootfs.ext4"
+	etcdClient := getClient()
+	defer etcdClient.Close()
 
+	startWatchers(etcdClient)
+  
 	head := &Node{
 		next: nil,
 		channel: nil,
@@ -88,5 +90,6 @@ func main() {
 		}
 	}
 	time.Sleep(2* time.Second)
-
+  log.Fatal(<-etcdServer.Err()) //Blocking statement
 }	
+

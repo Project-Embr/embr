@@ -2,3 +2,7 @@
 .vscode/
 .history/
 *.vsix
+
+# Nektos/act Stuff
+.env
+.secrets
