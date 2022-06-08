@@ -33,4 +33,5 @@ func main() {
 	fmt.Println("%s", cmd)
 	time.Sleep(5 * time.Second)
 	head.channel <- "shutdown"
+	time.Sleep(5* time.Second)
 }

@@ -29,21 +29,18 @@ func createNewVM(opts *options) chan string{
 // Run a firecracker VM
 func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan string) error {
 	// options -> firecracker config
-	fcCfg, err := opts.createFirecrackerConfig()
-	if err != nil {
-		log.Errorf("Error: %s", err)
-		return err
-	}
-	logger := log.New()
-	//client := firecracker.NewClient("unix", log.NewEntry(logger), true)
-	
+	fcCfg, err, socketPath := opts.createFirecrackerConfig()
+	//if err != nil {
+	//	log.Errorf("Error: %s", err)
+	//	return err
+	//}
+	//logger := log.New()
 
 	vmmCtx, vmmCancel := context.WithCancel(ctx)
 	defer vmmCancel()
-
-	machineOpts := []firecracker.Opt{
-		firecracker.WithLogger(log.NewEntry(logger)),
-	}
+	//machineOpts := []firecracker.Opt{
+	//	firecracker.WithLogger(log.NewEntry(logger)),
+	//}
 
 	var firecrackerBinary string
 	firecrackerBinary, err = exec.LookPath("firecracker")
@@ -56,7 +53,12 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan strin
 		return fmt.Errorf("failed to start binary, %q: %v", firecrackerBinary, err)
 	}
 
-	machine, err := firecracker.NewMachine(vmmCtx, fcCfg, machineOpts...)
+	c := firecracker.VMCommandBuilder{}.
+		WithSocketPath(socketPath).
+		WithBin(firecrackerBinary).
+		Build(vmmCtx)
+
+	machine, err := firecracker.NewMachine(vmmCtx, fcCfg, firecracker.WithProcessRunner(c))
 	if err != nil {
 		er <- err
 		return fmt.Errorf("failed creating machine: %s", err)
@@ -67,7 +69,9 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan strin
 		return fmt.Errorf("failed to start machine: %v", err)
 	}
 
+	signalHandlers(vmmCtx, machine)
 	er <- nil
+	// Deleted signal handlers, re add
 		// Wait for a signal and triger stopVMM
 	if(<- cmd == "shutdown"){
 		machine.Shutdown(ctx)
