@@ -28,19 +28,10 @@ func createNewVM(opts *options) chan string{
 
 // Run a firecracker VM
 func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan string) error {
-	// options -> firecracker config
-	fcCfg, err, socketPath := opts.createFirecrackerConfig()
-	//if err != nil {
-	//	log.Errorf("Error: %s", err)
-	//	return err
-	//}
-	//logger := log.New()
 
+	fcCfg, err, socketPath := opts.createFirecrackerConfig()
 	vmmCtx, vmmCancel := context.WithCancel(ctx)
 	defer vmmCancel()
-	//machineOpts := []firecracker.Opt{
-	//	firecracker.WithLogger(log.NewEntry(logger)),
-	//}
 
 	var firecrackerBinary string
 	firecrackerBinary, err = exec.LookPath("firecracker")
@@ -71,8 +62,7 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan strin
 
 	signalHandlers(vmmCtx, machine)
 	er <- nil
-	// Deleted signal handlers, re add
-		// Wait for a signal and triger stopVMM
+
 	if(<- cmd == "shutdown"){
 		machine.Shutdown(ctx)
 	}
