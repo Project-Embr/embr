@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"time"
-
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	client "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/server/v3/embed"
@@ -42,35 +40,19 @@ func getClient() *client.Client {
 	return etcdClient
 }
 
-func watchEmbrs(etcdClient *client.Client) {
+func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 	go func() {
 		watcher := etcdClient.Watch(context.Background(), etcdEmbrPrefix, client.WithPrefix())
 		for resp := range watcher {
+			log.Info("cakled")
 			for _, ev := range resp.Events {
 				log.Info(fmt.Sprintf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value))
-				startVM(etcdClient, ev.Kv.Value)
+				(*runningVM) = append((*runningVM), createNewVM(etcdClient, ev.Kv.Value))
 			}
 		}
 	}()
 }
 
-func startWatchers(etcdClient *client.Client) {
-	watchEmbrs(etcdClient)
-}
-
-func startVM(etcdClient *client.Client, inputOps []byte) {
-	opts := newOptions()
-
-	// These files must exist
-	opts.FcKernelImage = "ext/alpine.bin"
-	opts.FcRootDrivePath = "ext/rootfs.ext4"
-
-	err := json.Unmarshal(inputOps, &opts)
-	if err != nil {
-		fmt.Println("Unable to convert the JSON string to a struct")
-	}
-
-	if err := runVM(context.Background(), opts); err != nil {
-		log.Fatalf(err.Error())
-	}
+func startWatchers(etcdClient *client.Client, runningVM *[]chan string) {
+	watchEmbrs(etcdClient, runningVM)
 }

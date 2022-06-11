@@ -12,20 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-//Creates a new firecracker VM and returns the command channel
-func createNewVM(opts *options) chan string{
-	command := make(chan string, 1)
-	err := make(chan error, 1)
-	go runVM(context.Background(), opts, err, command)
-
-	if (<- err == nil){
-		fmt.Println("machine started successfully")
-	} else{
-		fmt.Println("Failed to create machine")
-	}
-	return command
-}
-
 // Run a firecracker VM
 func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan string) error {
 
