@@ -20,8 +20,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version-file: 'src/worker/go.mod'
-          cache: true
+          go-version: 1.17.x
       - name: Go fmt
         run: go fmt
       - name: git diff
@@ -38,8 +37,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version-file: 'go.mod'
-          cache: true
+          go-version: 1.17.x
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
