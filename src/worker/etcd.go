@@ -44,7 +44,6 @@ func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 	go func() {
 		watcher := etcdClient.Watch(context.Background(), etcdEmbrPrefix, client.WithPrefix())
 		for resp := range watcher {
-			log.Info("cakled")
 			for _, ev := range resp.Events {
 				log.Info(fmt.Sprintf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value))
 				(*runningVM) = append((*runningVM), createNewVM(etcdClient, ev.Kv.Value))

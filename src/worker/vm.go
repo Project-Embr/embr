@@ -7,13 +7,15 @@ import (
 	"os/exec"
 	"os/signal"
 	"syscall"
-
+	"encoding/json"
+	client "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/server/v3/embed"
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 	log "github.com/sirupsen/logrus"
 )
 
 // Run a firecracker VM
-func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan string) error {
+func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string) error {
 
 	fcCfg, err, socketPath := opts.createFirecrackerConfig()
 	vmmCtx, vmmCancel := context.WithCancel(ctx)
@@ -46,17 +48,46 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd <-chan strin
 		return fmt.Errorf("failed to start machine: %v", err)
 	}
 
-	signalHandlers(vmmCtx, machine)
 	er <- nil
+
+
+	//VMSignalHandlers(vmmCtx, machine)
+
 
 	if(<- cmd == "shutdown"){
 		machine.Shutdown(ctx)
+		cmd <- "Shutdown Complete"
 	}
 	return nil
 }
 
-// Create custom signal handlers
-func signalHandlers(ctx context.Context, m *firecracker.Machine) {
+//Creates a new firecracker VM and returns the command channel
+func createNewVM(etcdClient *client.Client, inputOps []byte) chan string{
+	opts := newOptions()
+
+	// These files must exist
+	opts.FcKernelImage = "ext/alpine.bin"
+	opts.FcRootDrivePath = "ext/rootfs.ext4"
+	err := json.Unmarshal(inputOps, &opts)
+	command := make(chan string, 1)
+	errChan := make(chan error, 1)
+	if(err == nil){
+		go runVM(context.Background(), opts, errChan, command)
+	}else{
+		log.Info("Invalid opts file")
+		return nil
+	}
+	if (<- errChan == nil){
+		log.Info("machine started successfully")
+	} else{
+		log.Warn("Failed to create machine")
+	}
+	return command
+}
+
+
+// Custom Signal Handlers
+func SignalHandlers(etcdClient *client.Client, etcdServer *embed.Etcd, VMPointer *[]chan string){
 	go func() {
 		// Reset signal handlers
 		signal.Reset(os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
@@ -64,12 +95,22 @@ func signalHandlers(ctx context.Context, m *firecracker.Machine) {
 		signal.Notify(channel, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 
 		var signal os.Signal = <-channel
+		VM := *VMPointer
+		log.Info("%d", len(VM))
 		if signal == syscall.SIGTERM || signal == os.Interrupt {
-			log.Printf("Caught signal: %s, clean shutdown", signal.String())
-			m.Shutdown(ctx)
+			for i := 0; i < len(VM); i++ {
+				VM[i] <- "shutdown"
+				<- VM[i]
+			}
+			etcdClient.Close()
+			etcdServer.Close()			
 		} else if signal == syscall.SIGQUIT {
-			log.Printf("Caught signal: %s, force shutdown", signal.String())
-			m.StopVMM()
+			for i := 0; i < len(VM); i++ {
+				VM[i] <- "shutdown"
+				<- VM[i]
+			}
+			etcdClient.Close()
+			etcdServer.Close()
 		}
 	}()
 }
