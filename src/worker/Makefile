@@ -11,4 +11,7 @@ clean:
 format:
 	go fmt
 
+etcdstart:
+	etcdctl put /embr/config '{"VCpuCount":1,"MemSizeMib":128}'
+
 .PHONY: all worker clean format
