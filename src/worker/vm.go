@@ -96,7 +96,6 @@ func SignalHandlers(etcdClient *client.Client, etcdServer *embed.Etcd, VMPointer
 
 		var signal os.Signal = <-channel
 		VM := *VMPointer
-		log.Info("%d", len(VM))
 		if signal == syscall.SIGTERM || signal == os.Interrupt {
 			for i := 0; i < len(VM); i++ {
 				VM[i] <- "shutdown"
