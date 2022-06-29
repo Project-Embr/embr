@@ -50,6 +50,14 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 		"-",
 	)
 
+	// Append socket path to Netns
+	opts.CNINetnsPath = strings.Join([]string{
+		opts.CNINetnsPath,
+		socketPath,
+	},
+		"",
+	)
+
 	return firecracker.Config{
 		SocketPath:        socketPath,
 		LogLevel:          "Debug",
