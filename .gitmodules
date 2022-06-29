@@ -1,6 +1,6 @@
 [submodule "submodules/plugins"]
-	path = submodules/plugins
+	path = src/worker/submodules/plugins
 	url = https://github.com/containernetworking/plugins.git
 [submodule "submodules/tc-redirect-tap"]
-	path = submodules/tc-redirect-tap
+	path = src/worker/submodules/tc-redirect-tap
 	url = https://github.com/awslabs/tc-redirect-tap.git
