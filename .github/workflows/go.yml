@@ -42,3 +42,22 @@ jobs:
         with:
           version: v1.46.0
           working-directory: src/worker
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.17.x
+
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Go build
+      run: make worker
+      working-directory: src/worker
+
+    - name: Run worker
+      run: timeout 5s ./worker || true
+      working-directory: src/worker
