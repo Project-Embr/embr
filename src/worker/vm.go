@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
+	log "github.com/sirupsen/logrus"
+	client "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/server/v3/embed"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
-	"encoding/json"
-	client "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/server/v3/embed"
-	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
-	log "github.com/sirupsen/logrus"
 )
 
 // Run a firecracker VM
@@ -50,11 +50,7 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string)
 
 	er <- nil
 
-
-	//VMSignalHandlers(vmmCtx, machine)
-
-
-	if(<- cmd == "shutdown"){
+	if <-cmd == "shutdown" {
 		machine.Shutdown(ctx)
 		cmd <- "Shutdown Complete"
 	}
@@ -62,7 +58,7 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string)
 }
 
 //Creates a new firecracker VM and returns the command channel
-func createNewVM(etcdClient *client.Client, inputOps []byte) chan string{
+func createNewVM(etcdClient *client.Client, inputOps []byte) chan string {
 	opts := newOptions()
 
 	// These files must exist
@@ -71,23 +67,22 @@ func createNewVM(etcdClient *client.Client, inputOps []byte) chan string{
 	err := json.Unmarshal(inputOps, &opts)
 	command := make(chan string, 1)
 	errChan := make(chan error, 1)
-	if(err == nil){
+	if err == nil {
 		go runVM(context.Background(), opts, errChan, command)
-	}else{
+	} else {
 		log.Info("Invalid opts file")
 		return nil
 	}
-	if (<- errChan == nil){
+	if <-errChan == nil {
 		log.Info("machine started successfully")
-	} else{
+	} else {
 		log.Warn("Failed to create machine")
 	}
 	return command
 }
 
-
 // Custom Signal Handlers
-func SignalHandlers(etcdClient *client.Client, etcdServer *embed.Etcd, VMPointer *[]chan string){
+func SignalHandlers(etcdClient *client.Client, etcdServer *embed.Etcd, VMPointer *[]chan string) {
 	go func() {
 		// Reset signal handlers
 		signal.Reset(os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
@@ -99,14 +94,14 @@ func SignalHandlers(etcdClient *client.Client, etcdServer *embed.Etcd, VMPointer
 		if signal == syscall.SIGTERM || signal == os.Interrupt {
 			for i := 0; i < len(VM); i++ {
 				VM[i] <- "shutdown"
-				<- VM[i]
+				<-VM[i]
 			}
 			etcdClient.Close()
-			etcdServer.Close()			
+			etcdServer.Close()
 		} else if signal == syscall.SIGQUIT {
 			for i := 0; i < len(VM); i++ {
 				VM[i] <- "shutdown"
-				<- VM[i]
+				<-VM[i]
 			}
 			etcdClient.Close()
 			etcdServer.Close()

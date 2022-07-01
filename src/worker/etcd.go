@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"time"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	client "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/server/v3/embed"
+	"time"
 )
 
 func startEtcd() *embed.Etcd {

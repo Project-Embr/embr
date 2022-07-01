@@ -1,14 +1,13 @@
 package main
 
-
 import (
-	"time"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 func main() {
-	var runningVM[]chan string
-	
+	var runningVM []chan string
+
 	etcdServer := startEtcd()
 	defer etcdServer.Close()
 
@@ -18,7 +17,6 @@ func main() {
 	SignalHandlers(etcdClient, etcdServer, &runningVM)
 	startWatchers(etcdClient, &runningVM)
 
-	time.Sleep(2* time.Second)
-  	log.Fatal(<-etcdServer.Err()) //Blocking statement
-}	
-
+	time.Sleep(2 * time.Second)
+	log.Fatal(<-etcdServer.Err()) //Blocking statement
+}
