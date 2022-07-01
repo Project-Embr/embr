@@ -6,8 +6,44 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  fmt:
+  gofmt:
+    name: Go fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.17.x
+      - name: Go fmt
+        run: gofmt -l -w src/worker/
+      - name: git diff
+        run: |
+          git diff --compact-summary --exit-code || \
+            (echo; echo "Unexpected difference in directories after formatting. Run 'go fmt' command and commit."; exit 1)
+
+  golangci:
+    name: Golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.17.x
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.46.0
+          working-directory: src/worker
+
+  build:
     runs-on: ubuntu-latest
     steps:
     - name: Setup Go
@@ -20,22 +56,6 @@ jobs:
 
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
-
-    - run: cd src/worker
-
-    - name: Go Format
-      run: gofmt -d -s .
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Setup Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: 1.17.x
-
-    - name: Checkout code
-      uses: actions/checkout@v3
 
     - run: cd src/worker
 
