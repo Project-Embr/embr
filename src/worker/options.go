@@ -16,10 +16,13 @@ func newOptions() *options {
 }
 
 type options struct {
-	FcKernelImage   string `description:"Kernel image path"`
-	FcRootDrivePath string `description:"RootFS path"`
-	VCpuCount       int64  `json:"VCpuCount,omitempty"`
-	MemSizeMib      int64  `json:"MemSizeMib,omitempty"`
+	FcKernelImage   string   `description:"Kernel image path"`
+	FcRootDrivePath string   `description:"RootFS path"`
+	VCpuCount       int64    `json:"VCpuCount,omitempty"`
+	MemSizeMib      int64    `json:"MemSizeMib,omitempty"`
+	CNIConfigPath   string   `discription:"CNI network configuration path"`
+	CNIPluginsPath  []string `discription:"CNI plugins path"`
+	CNINetnsPath    string   `discription:"CNI Netns path"`
 }
 
 // Converts options to a usable firecracker config
@@ -44,6 +47,14 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error, strin
 		strconv.Itoa(os.Getpid()),
 		strconv.Itoa(rand.Intn(1000))},
 		"-",
+	)
+
+	// Append socket path to Netns
+	opts.CNINetnsPath = strings.Join([]string{
+		opts.CNINetnsPath,
+		socketPath,
+	},
+		"",
 	)
 
 	return firecracker.Config{

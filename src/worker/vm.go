@@ -43,6 +43,8 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string)
 		return fmt.Errorf("failed creating machine: %s", err)
 	}
 
+	startVeth(machine, opts)
+
 	if err := machine.Start(vmmCtx); err != nil {
 		er <- err
 		return fmt.Errorf("failed to start machine: %v", err)

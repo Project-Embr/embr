@@ -54,4 +54,23 @@ func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 
 func startWatchers(etcdClient *client.Client, runningVM *[]chan string) {
 	watchEmbrs(etcdClient, runningVM)
+
+func startVM(etcdClient *client.Client, inputOps []byte) {
+	opts := newOptions()
+
+	// These files must exist
+	opts.FcKernelImage = "ext/alpine.bin"
+	opts.FcRootDrivePath = "ext/rootfs.ext4"
+	opts.CNIConfigPath = "cni/conf.d/"
+	opts.CNIPluginsPath = []string{"submodules/plugins/bin/"}
+	opts.CNINetnsPath = "ext/netns"
+
+	err := json.Unmarshal(inputOps, &opts)
+	if err != nil {
+		fmt.Println("Unable to convert the JSON string to a struct")
+	}
+
+	if err := runVM(context.Background(), opts); err != nil {
+		log.Fatalf(err.Error())
+	}
 }
