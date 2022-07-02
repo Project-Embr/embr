@@ -46,7 +46,7 @@ func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 		for resp := range watcher {
 			for _, ev := range resp.Events {
 				log.Info(fmt.Sprintf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value))
-				(*runningVM) = append((*runningVM), createNewVM(etcdClient, ev.Kv.Value))
+				(*runningVM) = append((*runningVM), createNewVM(etcdClient, ev.Kv.Value, runningVM))
 			}
 		}
 	}()
@@ -55,7 +55,7 @@ func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 func startWatchers(etcdClient *client.Client, runningVM *[]chan string) {
 	watchEmbrs(etcdClient, runningVM)
 }
-func startVM(etcdClient *client.Client, inputOps []byte) {
+func startVM(etcdClient *client.Client, inputOps []byte, runningVM) {
 	opts := newOptions()
 
 	// These files must exist
@@ -66,11 +66,13 @@ func startVM(etcdClient *client.Client, inputOps []byte) {
 	opts.CNINetnsPath = "ext/netns"
 
 	err := json.Unmarshal(inputOps, &opts)
+	command := make(chan string, 1)
+	errChan := make(chan error, 1)
 	if err != nil {
 		fmt.Println("Unable to convert the JSON string to a struct")
 	}
 
-	if err := runVM(context.Background(), opts); err != nil {
+	if err := runVM(context.Background(), opts, errChan, command); err != nil {
 		log.Fatalf(err.Error())
 	}
 }
