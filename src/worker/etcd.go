@@ -54,7 +54,7 @@ func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 
 func startWatchers(etcdClient *client.Client, runningVM *[]chan string) {
 	watchEmbrs(etcdClient, runningVM)
-
+}
 func startVM(etcdClient *client.Client, inputOps []byte) {
 	opts := newOptions()
 
