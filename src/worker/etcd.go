@@ -70,9 +70,16 @@ func startVM(etcdClient *client.Client, inputOps []byte, runningVM) {
 	errChan := make(chan error, 1)
 	if err != nil {
 		fmt.Println("Unable to convert the JSON string to a struct")
+		return nil
+	}else{
+		go runVM(context.Background(), opts, errChan, command)
+	}
+	
+	if (<- errChan == nil){
+		log.Info("Machine Started Sucessfully")
+	} else{
+		log.Warn("Failed To Create Machine")
 	}
 
-	if err := runVM(context.Background(), opts, errChan, command); err != nil {
-		log.Fatalf(err.Error())
-	}
+	return command
 }
