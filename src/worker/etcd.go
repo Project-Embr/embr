@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	client "go.etcd.io/etcd/client/v3"
@@ -46,7 +47,7 @@ func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 		for resp := range watcher {
 			for _, ev := range resp.Events {
 				log.Info(fmt.Sprintf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value))
-				(*runningVM) = append((*runningVM), createNewVM(etcdClient, ev.Kv.Value, runningVM))
+				(*runningVM) = append((*runningVM), startVM(etcdClient, ev.Kv.Value, runningVM))
 			}
 		}
 	}()
@@ -55,7 +56,7 @@ func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 func startWatchers(etcdClient *client.Client, runningVM *[]chan string) {
 	watchEmbrs(etcdClient, runningVM)
 }
-func startVM(etcdClient *client.Client, inputOps []byte, runningVM) {
+func startVM(etcdClient *client.Client, inputOps []byte, runningVM *[]chan string) chan string {
 	opts := newOptions()
 
 	// These files must exist
@@ -71,13 +72,13 @@ func startVM(etcdClient *client.Client, inputOps []byte, runningVM) {
 	if err != nil {
 		fmt.Println("Unable to convert the JSON string to a struct")
 		return nil
-	}else{
+	} else {
 		go runVM(context.Background(), opts, errChan, command)
 	}
-	
-	if (<- errChan == nil){
+
+	if <-errChan == nil {
 		log.Info("Machine Started Sucessfully")
-	} else{
+	} else {
 		log.Warn("Failed To Create Machine")
 	}
 
