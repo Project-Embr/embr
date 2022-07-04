@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 	log "github.com/sirupsen/logrus"
 	client "go.etcd.io/etcd/client/v3"
@@ -14,21 +13,27 @@ import (
 )
 
 // Run a firecracker VM
-func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string) error {
+func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string) {
 
 	fcCfg, err, socketPath := opts.createFirecrackerConfig()
 	vmmCtx, vmmCancel := context.WithCancel(ctx)
 	defer vmmCancel()
-
+	if err != nil{
+		er <- err
+		log.Error("Error with creating config")
+		return 
+	}
 	var firecrackerBinary string
 	firecrackerBinary, err = exec.LookPath("firecracker")
 	if os.IsNotExist(err) {
 		er <- err
-		return fmt.Errorf("binary %q does not exist: %v", firecrackerBinary, err)
+		log.Error("binary %q does not exist: %v", firecrackerBinary, err)
+		return 
 	}
 	if err != nil {
 		er <- err
-		return fmt.Errorf("failed to start binary, %q: %v", firecrackerBinary, err)
+		log.Error("failed to start binary, %q: %v", firecrackerBinary, err)
+		return
 	}
 
 	c := firecracker.VMCommandBuilder{}.
@@ -39,14 +44,16 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string)
 	machine, err := firecracker.NewMachine(vmmCtx, fcCfg, firecracker.WithProcessRunner(c))
 	if err != nil {
 		er <- err
-		return fmt.Errorf("failed creating machine: %s", err)
+		log.Error("failed creating machine: %s", err)
+		return 
 	}
 
 	startVeth(machine, opts)
 
 	if err := machine.Start(vmmCtx); err != nil {
 		er <- err
-		return fmt.Errorf("failed to start machine: %v", err)
+		log.Error("failed to start machine: %v", err)
+		return 
 	}
 
 	er <- nil
@@ -58,7 +65,7 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string)
 			log.Warn("Shutdown Failed")
 		}
 	}
-	return nil
+	return 
 }
 
 // Custom Signal Handlers
