@@ -65,7 +65,6 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string)
 			log.Warn("Shutdown Failed")
 		}
 	}
-	return
 }
 
 // Custom Signal Handlers
