@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
+	log "github.com/sirupsen/logrus"
 	client "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/server/v3/embed"
 	"os"
@@ -51,8 +52,11 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string)
 	er <- nil
 
 	if <-cmd == "shutdown" {
-		machine.Shutdown(ctx)
-		cmd <- "Shutdown Complete"
+		if machine.Shutdown(ctx) == nil {
+			cmd <- "Shutdown Complete"
+		} else {
+			log.Warn("Shutdown Failed")
+		}
 	}
 	return nil
 }
