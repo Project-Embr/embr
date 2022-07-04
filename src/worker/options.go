@@ -26,14 +26,13 @@ type options struct {
 }
 
 // Converts options to a usable firecracker config
-func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
+func (opts *options) createFirecrackerConfig() (firecracker.Config, error, string) {
 	// setup NICs
 	var NICs []firecracker.NetworkInterface
-
 	// BlockDevices
 	blockDevices, err := opts.getBlockDevices()
 	if err != nil {
-		return firecracker.Config{}, err
+		return firecracker.Config{}, err, ""
 	}
 
 	// vsocks
@@ -72,7 +71,7 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 			Smt:        firecracker.Bool(true),
 			MemSizeMib: firecracker.Int64(opts.MemSizeMib),
 		},
-	}, nil
+	}, nil, socketPath
 }
 
 // constructs a list of drives from the options config
