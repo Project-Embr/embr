@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"os/exec"
+	"os/user"
 
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 	models "github.com/firecracker-microvm/firecracker-go-sdk/client/models"
@@ -23,6 +25,12 @@ type options struct {
 	CNIConfigPath   string   `discription:"CNI network configuration path"`
 	CNIPluginsPath  []string `discription:"CNI plugins path"`
 	CNINetnsPath    string   `discription:"CNI Netns path"`
+
+	Id           string `long:"id" description:"Jailer VMM id"`
+
+	Uid      int `long:"uid" description:"Jailer uid"`
+	Gid      int `long:"gid" description:"Jailer gid"`
+	NumaNode int `long:"node" description:"Jailer numa node"`
 }
 
 // Converts options to a usable firecracker config
@@ -57,6 +65,37 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error, strin
 		"",
 	)
 
+
+	
+	//err will need to be handled
+	fcBinary, err := exec.LookPath("firecracker")
+	if err != nil{
+		return firecracker.Config{}, err, ""
+	}
+	jailerBinary, err := exec.LookPath("jailer")
+	if err != nil{
+		return firecracker.Config{}, err, ""
+	}
+	USER, err := user.Current() 
+	if err != nil{
+		return firecracker.Config{}, err, ""
+	}
+	Gid, err := strconv.Atoi(USER.Gid)
+	Uid, err := strconv.Atoi(USER.Uid)
+	//Creates the jailer
+	jailer := &firecracker.JailerConfig{
+		GID:            firecracker.Int(Gid),
+		UID:            firecracker.Int(Uid),
+		ID:             opts.Id,
+		NumaNode:       firecracker.Int(opts.NumaNode),
+		ExecFile:       fcBinary,
+		JailerBinary:   jailerBinary,
+		Daemonize:     	true,
+		ChrootStrategy: firecracker.NewNaiveChrootStrategy(opts.FcKernelImage),
+		Stdout:         os.Stdout,
+		Stderr:         os.Stderr,
+		Stdin:          os.Stdin,
+	}
 	return firecracker.Config{
 		SocketPath:        socketPath,
 		LogLevel:          "Debug",
@@ -71,6 +110,7 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error, strin
 			Smt:        firecracker.Bool(true),
 			MemSizeMib: firecracker.Int64(opts.MemSizeMib),
 		},
+		JailerCfg: jailer,
 	}, nil, socketPath
 }
 
