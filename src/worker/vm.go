@@ -16,7 +16,7 @@ import (
 func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string) {
 
 	fcCfg, err, socketPath := opts.createFirecrackerConfig()
-	vmmCtx, vmmCancel := context.WithCancel(ctx)
+	vmmCtx, vmmCancel := context.WithTimeout(ctx, 10000)
 	defer vmmCancel()
 	if err != nil {
 		er <- err
