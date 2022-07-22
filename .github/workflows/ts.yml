@@ -39,7 +39,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ./src/master/frontend/package-lock.json
       - run: npm ci
-      - run: npm run prettier
+      - run: npm run check-format
 
   tsc:
     name: Check Types
