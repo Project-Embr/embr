@@ -1,0 +1,72 @@
+name: Typescript
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        env:
+          FORCE_COLOR: 0
+        with:
+          node-version: 18.x
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run check-lint
+
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        env:
+          FORCE_COLOR: 0
+        with:
+          node-version: 18.x
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run prettier
+
+  tsc:
+    name: Check Types
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        env:
+          FORCE_COLOR: 0
+        with:
+          node-version: 18.x
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run check-types
+
+  nextBuild:
+    name: Next Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        env:
+          FORCE_COLOR: 0
+        with:
+          node-version: 18.x
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
