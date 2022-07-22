@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/user"
 
+	guuid "github.com/google/uuid"
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 	models "github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 )
@@ -80,17 +81,23 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error, strin
 	if err != nil{
 		return firecracker.Config{}, err, ""
 	}
+	ChrootDir, err := os.Getwd()
+	if err != nil{
+		return firecracker.Config{}, err, ""
+	}	
+	ChrootDir = ChrootDir
 	Gid, err := strconv.Atoi(USER.Gid)
 	Uid, err := strconv.Atoi(USER.Uid)
 	//Creates the jailer
 	jailer := &firecracker.JailerConfig{
 		GID:            firecracker.Int(Gid),
 		UID:            firecracker.Int(Uid),
-		ID:             opts.Id,
-		NumaNode:       firecracker.Int(opts.NumaNode),
+		ID:             guuid.NewString(),
+		NumaNode:       firecracker.Int(0),
 		ExecFile:       fcBinary,
 		JailerBinary:   jailerBinary,
 		Daemonize:     	true,
+		ChrootBaseDir:  (ChrootDir),
 		ChrootStrategy: firecracker.NewNaiveChrootStrategy(opts.FcKernelImage),
 		Stdout:         os.Stdout,
 		Stderr:         os.Stderr,
