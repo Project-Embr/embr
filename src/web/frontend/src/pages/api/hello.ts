@@ -5,6 +5,11 @@ type Data = {
   name: string;
 };
 
+/**
+ * hello: API handler for the /api/hello route
+ * @param {NextApiRequest} req
+ * @param {NextApiResponse} res
+ */
 export default function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
