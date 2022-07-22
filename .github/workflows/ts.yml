@@ -6,13 +6,14 @@ on:
       - master
   pull_request:
 
+defaults:
+  run:
+    working-directory: ./src/master/frontend/
+
 jobs:
   eslint:
     name: ESLint
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./src/master/frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -29,9 +30,6 @@ jobs:
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./src/master/frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -48,9 +46,6 @@ jobs:
   tsc:
     name: Check Types
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./src/master/frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -67,9 +62,6 @@ jobs:
   nextBuild:
     name: Next Build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./src/master/frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
