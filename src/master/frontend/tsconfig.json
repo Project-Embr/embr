@@ -17,6 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "paths": {
+      "@components/*": ["./src/components/*"],
       "@/*": ["./src/*"]
     },
     "pretty": true,
