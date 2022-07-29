@@ -6,3 +6,6 @@
 # Nektos/act Stuff
 .env
 .secrets
+
+# ETCd Stuff
+default.etcd
