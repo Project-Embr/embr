@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	log "github.com/sirupsen/logrus"
 	client "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/server/v3/embed"
-	"time"
 )
 
 func startEtcd() *embed.Etcd {
 	cfg := embed.NewConfig()
-	cfg.Dir = "default.etcd"
+	cfg.Dir = "/tmp/etcd"
+	cfg.LogLevel = "debug"
 
 	etcdServer, err := embed.StartEtcd(cfg)
 	if err != nil {
@@ -60,11 +62,11 @@ func startVM(etcdClient *client.Client, inputOps []byte, runningVM *[]chan strin
 	opts := newOptions()
 
 	// These files must exist
-	opts.FcKernelImage = "ext/alpine.bin"
-	opts.FcRootDrivePath = "ext/rootfs.ext4"
+	opts.FcKernelImage = "/tmp/images/alpine.bin"
+	opts.FcRootDrivePath = "/tmp/images/rootfs.ext4"
 	opts.CNIConfigPath = "cni/conf.d/"
 	opts.CNIPluginsPath = []string{"submodules/plugins/bin/"}
-	opts.CNINetnsPath = "ext/netns"
+	opts.CNINetnsPath = "/tmp/netns"
 
 	err := json.Unmarshal(inputOps, &opts)
 	command := make(chan string, 1)

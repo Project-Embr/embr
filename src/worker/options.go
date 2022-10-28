@@ -43,7 +43,7 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error, strin
 
 	// Generate socket path
 	var socketPath = strings.Join([]string{
-		".firecracker.sock",
+		"/tmp/.firecracker.sock",
 		strconv.Itoa(os.Getpid()),
 		strconv.Itoa(rand.Intn(1000))},
 		"-",
