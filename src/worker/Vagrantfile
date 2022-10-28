@@ -7,31 +7,32 @@ Vagrant.configure("2") do |config|
 
   config.vm.provider "virtualbox" do |vb|
     vb.name = "embr"
-    vb.gui = false
 
-    vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
-  
     vb.memory = "2048"
+    vb.cpus   = "2"
+
+    vb.gui = false
+    vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
   end
 
   config.vm.provision "shell", inline: <<-SHELL
-    apt update && apt upgrade -y
-    apt install make vim wget curl -y
+    apt update && \
+      apt upgrade -y && \
+      apt install make vim wget curl -y
 
     cp -r /embr/images /tmp
-
     cd /tmp
 
     ## Install Firecracker & Jailer
     FCVersion=1.1.1
-    curl -Lo firecracker.tgz https://github.com/firecracker-microvm/firecracker/releases/download/v$FCVersion/firecracker-v$FCVersion-x86_64.tgz \
-      && mkdir firecracker \
-      && tar -xf firecracker.tgz -C firecracker \
-      && chmod +x firecracker/release-v$FCVersion-x86_64/firecracker-v$FCVersion-x86_64 \
-      && mv firecracker/release-v$FCVersion-x86_64/firecracker-v$FCVersion-x86_64 /usr/local/bin/firecracker \
-      && chmod +x firecracker/release-v$FCVersion-x86_64/jailer-v$FCVersion-x86_64 \
-      && mv firecracker/release-v$FCVersion-x86_64/jailer-v$FCVersion-x86_64 /usr/local/bin/jailer \
-      && rm -rf /fc/firecracker*
+    curl -Lo firecracker.tgz https://github.com/firecracker-microvm/firecracker/releases/download/v$FCVersion/firecracker-v$FCVersion-x86_64.tgz && \
+      mkdir firecracker && \
+      tar -xf firecracker.tgz -C firecracker && \
+      chmod +x firecracker/release-v$FCVersion-x86_64/firecracker-v$FCVersion-x86_64 && \
+      mv firecracker/release-v$FCVersion-x86_64/firecracker-v$FCVersion-x86_64 /usr/local/bin/firecracker && \
+      chmod +x firecracker/release-v$FCVersion-x86_64/jailer-v$FCVersion-x86_64 && \
+      mv firecracker/release-v$FCVersion-x86_64/jailer-v$FCVersion-x86_64 /usr/local/bin/jailer && \
+      rm -rf /fc/firecracker*
 
     ## Install Go 1.19
     wget https://go.dev/dl/go1.19.linux-amd64.tar.gz && \
@@ -45,6 +46,7 @@ Vagrant.configure("2") do |config|
       tar xvf etcd-${RELEASE}-linux-amd64.tar.gz && \
       mv etcd-${RELEASE}-linux-amd64/etcd etcd-${RELEASE}-linux-amd64/etcdctl etcd-${RELEASE}-linux-amd64/etcdutl /usr/local/bin
 
+    # Setup worker
     su vagrant && \
       cd /embr && \
       go get && \
