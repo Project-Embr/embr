@@ -8,6 +8,8 @@ Vagrant.configure("2") do |config|
   config.vm.provider "virtualbox" do |vb|
     vb.name = "embr"
     vb.gui = false
+
+    vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
   
     vb.memory = "2048"
   end
@@ -43,6 +45,10 @@ Vagrant.configure("2") do |config|
       tar xvf etcd-${RELEASE}-linux-amd64.tar.gz && \
       mv etcd-${RELEASE}-linux-amd64/etcd etcd-${RELEASE}-linux-amd64/etcdctl etcd-${RELEASE}-linux-amd64/etcdutl /usr/local/bin
 
-    cd /embr; go get
+    su vagrant && \
+      cd /embr && \
+      go get && \
+      make worker
+
   SHELL
 end
