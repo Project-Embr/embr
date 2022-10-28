@@ -24,4 +24,31 @@ cni: $(PLUGIN_FILES)
 format:
 	go fmt
 
+dockerbuild:
+	docker build -t project-embr/embr:worker-latest .
+
+dockerrun:
+	docker run \
+	--device /dev/kvm:/dev/kvm:rw \
+	-p 127.0.0.1:2379:2379 \
+	-v $$(pwd):/embr \
+	project-embr/embr:worker-latest \
+	# --cap-add=net_admin \
+	# 	--net host \
+
+dockerinteractive:
+	docker run \
+	--device /dev/kvm:/dev/kvm:rw \
+	-p 2379:2379 \
+	--user root \
+	--cap-add=NET_ADMIN \
+	--cap-add=net_admin \
+	-v $$(pwd):/embr \
+	-it \
+	--entrypoint "" \
+	project-embr/embr:worker-latest \
+	bash
+	# --cap-add=net_admin \
+	# 	--net host \
+
 .PHONY: all worker cni clean format
