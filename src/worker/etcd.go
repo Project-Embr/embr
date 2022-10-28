@@ -14,7 +14,6 @@ import (
 func startEtcd() *embed.Etcd {
 	cfg := embed.NewConfig()
 	cfg.Dir = "/tmp/etcd"
-
 	cfg.LogLevel = "debug"
 
 	etcdServer, err := embed.StartEtcd(cfg)
