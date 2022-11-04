@@ -13,6 +13,7 @@ clean:
 	rm -rf $(PLUGIN_PATH)/bin
 
 cni: $(PLUGIN_FILES)
+	git submodule update
 	mkdir -p $(PLUGIN_PATH)/bin
 	export GOWORK=off; cd $(PLUGIN_PATH)/plugins/main/ptp && go build -o ${PLUGIN_PATH}/bin/ptp
 	export GOWORK=off; cd $(PLUGIN_PATH)/plugins/ipam/host-local && go build -o ${PLUGIN_PATH}/bin/host-local
