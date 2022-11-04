@@ -13,7 +13,8 @@ import (
 
 func startEtcd() *embed.Etcd {
 	cfg := embed.NewConfig()
-	cfg.Dir = "default.etcd"
+	cfg.Dir = "/tmp/etcd"
+	cfg.LogLevel = "debug"
 
 	etcdServer, err := embed.StartEtcd(cfg)
 	if err != nil {
@@ -42,39 +43,46 @@ func getClient() *client.Client {
 	return etcdClient
 }
 
-func setupNode() {
-	log.Info(workerID)
-}
-
-func watchEmbrs(etcdClient *client.Client) {
+func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 	go func() {
 		watcher := etcdClient.Watch(context.Background(), etcdEmbrPrefix, client.WithPrefix())
 		for resp := range watcher {
 			for _, ev := range resp.Events {
 				log.Info(fmt.Sprintf("%s %q : %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value))
-				startVM(etcdClient, ev.Kv.Value)
+				(*runningVM) = append((*runningVM), startVM(etcdClient, ev.Kv.Value, runningVM))
 			}
 		}
 	}()
 }
 
-func startWatchers(etcdClient *client.Client) {
-	watchEmbrs(etcdClient)
+func startWatchers(etcdClient *client.Client, runningVM *[]chan string) {
+	watchEmbrs(etcdClient, runningVM)
 }
-
-func startVM(etcdClient *client.Client, inputOps []byte) {
+func startVM(etcdClient *client.Client, inputOps []byte, runningVM *[]chan string) chan string {
 	opts := newOptions()
 
 	// These files must exist
-	opts.FcKernelImage = "ext/alpine.bin"
-	opts.FcRootDrivePath = "ext/rootfs.ext4"
+	opts.FcKernelImage = "/tmp/images/alpine.bin"
+	opts.FcRootDrivePath = "/tmp/images/rootfs.ext4"
+	opts.CNIConfigPath = "cni/conf.d/"
+	opts.CNIPluginsPath = []string{"submodules/plugins/bin/"}
+	opts.CNINetnsPath = "/tmp/netns"
 
 	err := json.Unmarshal(inputOps, &opts)
+	command := make(chan string, 1)
+	errChan := make(chan error, 1)
 	if err != nil {
 		fmt.Println("Unable to convert the JSON string to a struct")
+		return nil
+	} else {
+		go runVM(context.Background(), opts, errChan, command)
 	}
 
-	if err := runVM(context.Background(), opts); err != nil {
-		log.Fatalf(err.Error())
+	if <-errChan == nil {
+		log.Info("Machine Started Sucessfully")
+	} else {
+		log.Warn("Failed To Create Machine")
 	}
+
+	return command
 }

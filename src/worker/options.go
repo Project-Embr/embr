@@ -16,21 +16,23 @@ func newOptions() *options {
 }
 
 type options struct {
-	FcKernelImage   string `description:"Kernel image path"`
-	FcRootDrivePath string `description:"RootFS path"`
-	VCpuCount       int64  `json:"VCpuCount,omitempty"`
-	MemSizeMib      int64  `json:"MemSizeMib,omitempty"`
+	FcKernelImage   string   `description:"Kernel image path"`
+	FcRootDrivePath string   `description:"RootFS path"`
+	VCpuCount       int64    `json:"VCpuCount,omitempty"`
+	MemSizeMib      int64    `json:"MemSizeMib,omitempty"`
+	CNIConfigPath   string   `discription:"CNI network configuration path"`
+	CNIPluginsPath  []string `discription:"CNI plugins path"`
+	CNINetnsPath    string   `discription:"CNI Netns path"`
 }
 
 // Converts options to a usable firecracker config
-func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
+func (opts *options) createFirecrackerConfig() (firecracker.Config, error, string) {
 	// setup NICs
 	var NICs []firecracker.NetworkInterface
-
 	// BlockDevices
 	blockDevices, err := opts.getBlockDevices()
 	if err != nil {
-		return firecracker.Config{}, err
+		return firecracker.Config{}, err, ""
 	}
 
 	// vsocks
@@ -41,10 +43,18 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 
 	// Generate socket path
 	var socketPath = strings.Join([]string{
-		".firecracker.sock",
+		"/tmp/.firecracker.sock",
 		strconv.Itoa(os.Getpid()),
 		strconv.Itoa(rand.Intn(1000))},
 		"-",
+	)
+
+	// Append socket path to Netns
+	opts.CNINetnsPath = strings.Join([]string{
+		opts.CNINetnsPath,
+		socketPath,
+	},
+		"",
 	)
 
 	return firecracker.Config{
@@ -61,7 +71,7 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 			Smt:        firecracker.Bool(true),
 			MemSizeMib: firecracker.Int64(opts.MemSizeMib),
 		},
-	}, nil
+	}, nil, socketPath
 }
 
 // constructs a list of drives from the options config

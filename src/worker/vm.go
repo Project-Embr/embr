@@ -2,67 +2,73 @@ package main
 
 import (
 	"context"
-	"fmt"
+	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
+	log "github.com/sirupsen/logrus"
+	client "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/server/v3/embed"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
-
-	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
-	log "github.com/sirupsen/logrus"
 )
 
 // Run a firecracker VM
-func runVM(ctx context.Context, opts *options) error {
-	// options -> firecracker config
-	fcCfg, err := opts.createFirecrackerConfig()
-	if err != nil {
-		log.Errorf("Error: %s", err)
-		return err
-	}
-	logger := log.New()
+func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string) {
 
+	fcCfg, err, socketPath := opts.createFirecrackerConfig()
 	vmmCtx, vmmCancel := context.WithCancel(ctx)
 	defer vmmCancel()
-
-	machineOpts := []firecracker.Opt{
-		firecracker.WithLogger(log.NewEntry(logger)),
+	if err != nil {
+		er <- err
+		log.Errorf("Error with creating config")
+		return
 	}
-
 	var firecrackerBinary string
 	firecrackerBinary, err = exec.LookPath("firecracker")
 	if os.IsNotExist(err) {
-		return fmt.Errorf("binary %q does not exist: %v", firecrackerBinary, err)
+		er <- err
+		log.Errorf("binary %q does not exist: %v", firecrackerBinary, err)
+		return
 	}
 	if err != nil {
-		return fmt.Errorf("failed to start binary, %q: %v", firecrackerBinary, err)
+		er <- err
+		log.Errorf("failed to start binary, %q: %v", firecrackerBinary, err)
+		return
 	}
 
-	machine, err := firecracker.NewMachine(vmmCtx, fcCfg, machineOpts...)
+	c := firecracker.VMCommandBuilder{}.
+		WithSocketPath(socketPath).
+		WithBin(firecrackerBinary).
+		Build(vmmCtx)
+
+	machine, err := firecracker.NewMachine(vmmCtx, fcCfg, firecracker.WithProcessRunner(c))
 	if err != nil {
-		return fmt.Errorf("failed creating machine: %s", err)
+		er <- err
+		log.Errorf("failed creating machine: %s", err)
+		return
 	}
+
+	startVeth(machine, opts)
 
 	if err := machine.Start(vmmCtx); err != nil {
-		return fmt.Errorf("failed to start machine: %v", err)
+		er <- err
+		log.Errorf("failed to start machine: %v", err)
+		return
 	}
 
-	// Stop VM when this function exits
-	defer machine.StopVMM()
+	er <- nil
 
-	signalHandlers(vmmCtx, machine)
-
-	// wait for the VM to exit
-	if err := machine.Wait(vmmCtx); err != nil {
-		return fmt.Errorf("wait returned an error %s", err)
+	if <-cmd == "shutdown" {
+		if machine.Shutdown(ctx) == nil {
+			cmd <- "Shutdown Complete"
+		} else {
+			log.Warn("Shutdown Failed")
+		}
 	}
-
-	log.Printf("Machine started successfully")
-	return nil
 }
 
-// Create custom signal handlers
-func signalHandlers(ctx context.Context, m *firecracker.Machine) {
+// Custom Signal Handlers
+func SignalHandlers(etcdClient *client.Client, etcdServer *embed.Etcd, VMPointer *[]chan string) {
 	go func() {
 		// Reset signal handlers
 		signal.Reset(os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
@@ -70,12 +76,21 @@ func signalHandlers(ctx context.Context, m *firecracker.Machine) {
 		signal.Notify(channel, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 
 		var signal os.Signal = <-channel
+		VM := *VMPointer
 		if signal == syscall.SIGTERM || signal == os.Interrupt {
-			log.Printf("Caught signal: %s, clean shutdown", signal.String())
-			m.Shutdown(ctx)
+			for i := 0; i < len(VM); i++ {
+				VM[i] <- "shutdown"
+				<-VM[i]
+			}
+			etcdClient.Close()
+			etcdServer.Close()
 		} else if signal == syscall.SIGQUIT {
-			log.Printf("Caught signal: %s, force shutdown", signal.String())
-			m.StopVMM()
+			for i := 0; i < len(VM); i++ {
+				VM[i] <- "shutdown"
+				<-VM[i]
+			}
+			etcdClient.Close()
+			etcdServer.Close()
 		}
 	}()
 }
