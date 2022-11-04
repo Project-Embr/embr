@@ -16,6 +16,9 @@ func main() {
 	defer etcdClient.Close()
 
 	SignalHandlers(etcdClient, etcdServer, &runningVM)
+
+	setupNode()
+
 	startWatchers(etcdClient, &runningVM)
 
 	time.Sleep(2 * time.Second)

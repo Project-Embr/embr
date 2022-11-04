@@ -10,3 +10,5 @@ default.etcd
 
 # Misc
 .vagrant
+NOTES.md
+GOALS.md

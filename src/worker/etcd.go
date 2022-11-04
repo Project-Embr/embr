@@ -43,6 +43,10 @@ func getClient() *client.Client {
 	return etcdClient
 }
 
+func setupNode() {
+	log.Info(workerID)
+}
+
 func watchEmbrs(etcdClient *client.Client, runningVM *[]chan string) {
 	go func() {
 		watcher := etcdClient.Watch(context.Background(), etcdEmbrPrefix, client.WithPrefix())
