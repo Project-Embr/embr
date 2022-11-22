@@ -1,6 +1,6 @@
 module github.com/project-embr/embr/src/worker
 
-go 1.17
+go 1.18
 
 replace github.com/coreos/etcd => go.etcd.io/etcd/v3 v3.5.4
 
