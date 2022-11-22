@@ -6,7 +6,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"os/exec"
+	"os/user"
 
+	log "github.com/sirupsen/logrus"
+
+	guuid "github.com/google/uuid"
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 	models "github.com/firecracker-microvm/firecracker-go-sdk/client/models"
 )
@@ -26,13 +31,13 @@ type options struct {
 }
 
 // Converts options to a usable firecracker config
-func (opts *options) createFirecrackerConfig() (firecracker.Config, error, string) {
+func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 	// setup NICs
 	var NICs []firecracker.NetworkInterface
 	// BlockDevices
 	blockDevices, err := opts.getBlockDevices()
 	if err != nil {
-		return firecracker.Config{}, err, ""
+		return firecracker.Config{}, err
 	}
 
 	// vsocks
@@ -56,7 +61,37 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error, strin
 	},
 		"",
 	)
+	log.Errorf("Check1")
 
+	fcBinary, err := exec.LookPath("firecracker")
+	if err != nil {
+		log.Errorf("No Firecracker Binary Found In PATH")
+		return firecracker.Config{}, err
+	}
+	jailerBinary, err := exec.LookPath("jailer")
+	if err != nil{
+		log.Errorf("No Jailer Binary Found In PATH")
+		return firecracker.Config{}, err
+	}
+	USER, err := user.Current()
+	if err != nil {
+		return firecracker.Config{}, err
+	}
+	chrootDir := "/machines"
+	Gid, err := strconv.Atoi(USER.Gid)
+	Uid, err := strconv.Atoi(USER.Uid)
+	jailer := &firecracker.JailerConfig{
+		GID:	firecracker.Int(Gid),
+		UID:    firecracker.Int(Uid),
+		ID:    	guuid.NewString(),
+		ExecFile: fcBinary,
+		Daemonize:	true,
+		NumaNode: firecracker.Int(0),
+		JailerBinary: jailerBinary,
+		ChrootBaseDir: (chrootDir),
+		ChrootStrategy: firecracker.NewNaiveChrootStrategy(opts.FcKernelImage),
+}
+	log.Errorf("Check2")
 	return firecracker.Config{
 		SocketPath:        socketPath,
 		LogLevel:          "Debug",
@@ -70,8 +105,8 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error, strin
 			VcpuCount:  firecracker.Int64(opts.VCpuCount),
 			Smt:        firecracker.Bool(true),
 			MemSizeMib: firecracker.Int64(opts.MemSizeMib),
-		},
-	}, nil, socketPath
+		}, JailerCfg: jailer,
+	}, nil
 }
 
 // constructs a list of drives from the options config

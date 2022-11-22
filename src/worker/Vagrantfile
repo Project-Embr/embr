@@ -19,10 +19,10 @@ Vagrant.configure("2") do |config|
     apt update && \
       apt upgrade -y && \
       apt install make vim wget curl -y
-
+    mkdir /machines
     cp -r /embr/images /tmp
     cd /tmp
-
+    
     ## Install Firecracker & Jailer
     FCVersion=1.1.1
     curl -Lo firecracker.tgz https://github.com/firecracker-microvm/firecracker/releases/download/v$FCVersion/firecracker-v$FCVersion-x86_64.tgz && \

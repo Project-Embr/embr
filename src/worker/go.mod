@@ -6,6 +6,7 @@ replace github.com/coreos/etcd => go.etcd.io/etcd/v3 v3.5.4
 
 require (
 	github.com/firecracker-microvm/firecracker-go-sdk v0.22.1-0.20220214213810-2380785d98b7
+	github.com/google/uuid v1.3.0
 	github.com/sirupsen/logrus v1.8.1
 	go.etcd.io/etcd/client/v3 v3.5.4
 	go.etcd.io/etcd/server/v3 v3.5.4
@@ -38,7 +39,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/btree v1.0.1 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect

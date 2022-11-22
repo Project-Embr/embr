@@ -15,7 +15,7 @@ import (
 // Run a firecracker VM
 func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string) {
 
-	fcCfg, err, socketPath := opts.createFirecrackerConfig()
+	fcCfg, err := opts.createFirecrackerConfig()
 	vmmCtx, vmmCancel := context.WithCancel(ctx)
 	defer vmmCancel()
 	if err != nil {
@@ -35,27 +35,26 @@ func runVM(ctx context.Context, opts *options, er chan<- error, cmd chan string)
 		log.Errorf("failed to start binary, %q: %v", firecrackerBinary, err)
 		return
 	}
-
-	c := firecracker.VMCommandBuilder{}.
-		WithSocketPath(socketPath).
-		WithBin(firecrackerBinary).
-		Build(vmmCtx)
-
-	machine, err := firecracker.NewMachine(vmmCtx, fcCfg, firecracker.WithProcessRunner(c))
+	logger := log.New()
+	machineOpts := []firecracker.Opt{
+		firecracker.WithLogger(log.NewEntry(logger)),
+	}
+	log.Errorf("check3")
+	machine, err := firecracker.NewMachine(vmmCtx, fcCfg, machineOpts...)
 	if err != nil {
 		er <- err
 		log.Errorf("failed creating machine: %s", err)
 		return
 	}
-
+	log.Errorf("CHeck4")
 	startVeth(machine, opts)
-
+	log.Errorf("Check5")
 	if err := machine.Start(vmmCtx); err != nil {
 		er <- err
 		log.Errorf("failed to start machine: %v", err)
 		return
 	}
-
+	log.Errorf("check6")
 	er <- nil
 
 	if <-cmd == "shutdown" {
