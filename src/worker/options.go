@@ -78,6 +78,7 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 		return firecracker.Config{}, err
 	}
 	chrootDir := "/machines"
+	cgroupver := "2"
 	Gid, err := strconv.Atoi(USER.Gid)
 	Uid, err := strconv.Atoi(USER.Uid)
 	jailer := &firecracker.JailerConfig{
@@ -89,6 +90,7 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 		NumaNode: firecracker.Int(0),
 		JailerBinary: jailerBinary,
 		ChrootBaseDir: (chrootDir),
+		CgroupVersion: cgroupver,
 		ChrootStrategy: firecracker.NewNaiveChrootStrategy(opts.FcKernelImage),
 }
 	log.Errorf("Check2")
