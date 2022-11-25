@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
-	log "github.com/sirupsen/logrus"
-	client "go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/server/v3/embed"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
+
+	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
+	log "github.com/sirupsen/logrus"
+	client "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/server/v3/embed"
 )
 
 // Run a firecracker VM
