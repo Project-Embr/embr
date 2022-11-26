@@ -2,18 +2,16 @@ package main
 
 import (
 	"io"
-	"math/rand"
-	"os"
-	"strconv"
-	"strings"
 	"os/exec"
 	"os/user"
+	"strconv"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
-	guuid "github.com/google/uuid"
 	firecracker "github.com/firecracker-microvm/firecracker-go-sdk"
 	models "github.com/firecracker-microvm/firecracker-go-sdk/client/models"
+	guuid "github.com/google/uuid"
 )
 
 func newOptions() *options {
@@ -46,30 +44,13 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 	// fifos
 	var fifo io.WriteCloser
 
-	// Generate socket path
-	var socketPath = strings.Join([]string{
-		"/tmp/.firecracker.sock",
-		strconv.Itoa(os.Getpid()),
-		strconv.Itoa(rand.Intn(1000))},
-		"-",
-	)
-
-	// Append socket path to Netns
-	opts.CNINetnsPath = strings.Join([]string{
-		opts.CNINetnsPath,
-		socketPath,
-	},
-		"",
-	)
-	log.Errorf("Check1")
-
 	fcBinary, err := exec.LookPath("firecracker")
 	if err != nil {
 		log.Errorf("No Firecracker Binary Found In PATH")
 		return firecracker.Config{}, err
 	}
 	jailerBinary, err := exec.LookPath("jailer")
-	if err != nil{
+	if err != nil {
 		log.Errorf("No Jailer Binary Found In PATH")
 		return firecracker.Config{}, err
 	}
@@ -82,20 +63,18 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 	Gid, err := strconv.Atoi(USER.Gid)
 	Uid, err := strconv.Atoi(USER.Uid)
 	jailer := &firecracker.JailerConfig{
-		GID:	firecracker.Int(Gid),
-		UID:    firecracker.Int(Uid),
-		ID:    	guuid.NewString(),
-		ExecFile: fcBinary,
-		Daemonize:	true,
-		NumaNode: firecracker.Int(0),
-		JailerBinary: jailerBinary,
-		ChrootBaseDir: (chrootDir),
-		CgroupVersion: cgroupver,
+		GID:            firecracker.Int(Gid),
+		UID:            firecracker.Int(Uid),
+		ID:             guuid.NewString(),
+		ExecFile:       fcBinary,
+		Daemonize:      true,
+		NumaNode:       firecracker.Int(0),
+		JailerBinary:   jailerBinary,
+		ChrootBaseDir:  (chrootDir),
+		CgroupVersion:  cgroupver,
 		ChrootStrategy: firecracker.NewNaiveChrootStrategy(opts.FcKernelImage),
-}
-	log.Errorf("Check2")
+	}
 	return firecracker.Config{
-		SocketPath:        socketPath,
 		LogLevel:          "Debug",
 		FifoLogWriter:     fifo,
 		KernelImagePath:   opts.FcKernelImage,
