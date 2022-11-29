@@ -2,6 +2,8 @@ package main
 
 import (
 	"io"
+	"os"
+	"math/rand"
 	"os/exec"
 	"os/user"
 	"strconv"
@@ -44,6 +46,18 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 	// fifos
 	var fifo io.WriteCloser
 
+	var socketPath = strings.Join([]string{
+		"/run/.firecracker.sock",
+		strconv.Itoa(os.Getpid()),
+		strconv.Itoa(rand.Intn(1000))},
+		"-",
+	)
+	opts.CNINetnsPath = strings.Join([]string{
+		opts.CNINetnsPath,
+		socketPath,
+	},
+	    "-",
+	)
 	fcBinary, err := exec.LookPath("firecracker")
 	if err != nil {
 		log.Errorf("No Firecracker Binary Found In PATH")
@@ -75,6 +89,7 @@ func (opts *options) createFirecrackerConfig() (firecracker.Config, error) {
 		ChrootStrategy: firecracker.NewNaiveChrootStrategy(opts.FcKernelImage),
 	}
 	return firecracker.Config{
+		SocketPath: socketPath,
 		LogLevel:          "Debug",
 		FifoLogWriter:     fifo,
 		KernelImagePath:   opts.FcKernelImage,
